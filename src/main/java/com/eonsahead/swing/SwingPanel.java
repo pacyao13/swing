@@ -1,4 +1,4 @@
-package com.eonsahead.swing;
+package swing;
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -9,17 +9,29 @@ import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
+import java.util.Random;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 
+/**
+ * I modified Leon Tabak's swingPanel class to animate a square and a circle 
+ * to move diagonally across the frame and change colors rapidly in accordance
+ * with 
+ * @author pet00
+ */
+
 public class SwingPanel extends JPanel implements ActionListener {
 
+    //initializing variables
     private double centerX = 0.0;
-    private double centerY = 0.0;
+    private double centerY = 0.2;
     private double radius = 0.5;
     private double deltaY = 0.02;
+    private double deltaX = 0.02;
     private Color color = Color.red;
+    
 
+    //executes swingpanel every time this timer ticks
     public SwingPanel() {
         Timer timer = new Timer(50, this);
         timer.start();
@@ -57,38 +69,63 @@ public class SwingPanel extends JPanel implements ActionListener {
         this.color = c;
     } // setColor( Color )
 
+    
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2D = (Graphics2D) g;
-
+        
+        
         int w = this.getWidth();
         int h = this.getHeight();
+        
+        
+        //I have two shapes, so I need to transform them both
+        AffineTransform transform1 = new AffineTransform();
+        AffineTransform scaling1 = new AffineTransform();
+        AffineTransform transform2 = new AffineTransform();
+        AffineTransform scaling2 = new AffineTransform();
+        scaling1.setToScale(w / 2, h / 2);
+        scaling2.setToScale(w/3,h/3);
+        AffineTransform translation1 = new AffineTransform();
+        AffineTransform translation2 = new AffineTransform();
+        translation1.setToTranslation(1.0, 1.0);
+        translation2.setToTranslation(0.5, 0.5);
+        transform1.concatenate(scaling1);
+        transform2.concatenate(scaling2);
+        transform1.concatenate(translation1);
+        transform2.concatenate(translation2);
 
-        AffineTransform transform = new AffineTransform();
-        AffineTransform scaling = new AffineTransform();
-        scaling.setToScale(w / 2, h / 2);
-        AffineTransform translation = new AffineTransform();
-        translation.setToTranslation(1.0, 1.0);
-
-        transform.concatenate(scaling);
-        transform.concatenate(translation);
-
-        // Replace this block of code that creates
-        // an ellipse with your own code that draws
-        // something else
-        // Make sure that all geometry fits in a square
-        // whose corners are (-1, -1) and (+1, +1)
+        Random rng = new Random();
+        //Draws a circle and a square 
         double d = 2 * this.radius;
         double ulx = this.centerX - this.radius;
         double uly = this.centerY - this.radius;
         Ellipse2D.Double circle = new Ellipse2D.Double(ulx, uly, d, d);
-
-        Shape shape = transform.createTransformedShape(circle);
+        Rectangle2D.Double rect1 = new Rectangle2D.Double(ulx+0.1,uly+0.2,d,d);
+        Shape shape1 = transform1.createTransformedShape(circle);
+        
         g2D.setColor(this.getColor());
-        g2D.fill(shape);
+        
+        g2D.fill(shape1);
+        Shape shape2 = transform2.createTransformedShape(rect1);
+        int r = 64 * (int) (1+Math.sin(this.centerX)) + rng.nextInt(64);
+        int b = 64 * (int) (1+Math.cos(this.centerX)) + rng.nextInt(64);
+        int green = 64 * (int) (1+Math.sin(this.centerY)) + rng.nextInt(64);
+        Color p = new Color (r,green,b);
+        this.setColor(p);
+        g2D.setColor(this.getColor());
+        g2D.fill(shape2);
+        
+        r = 64 * (int) (1+Math.sin(this.centerX)) + rng.nextInt(64);
+        b = 64 * (int) (1+Math.cos(this.centerX)) + rng.nextInt(64);
+        green = 64 * (int) (1+Math.sin(this.centerY)) + rng.nextInt(64);
+        Color q = new Color (r,green,b);
+        this.setColor(q);
     } // paintComponent( Graphics )
 
+    
+    
     @Override
     public void actionPerformed(ActionEvent event) {
         // You might also like to try what happens
@@ -104,8 +141,16 @@ public class SwingPanel extends JPanel implements ActionListener {
         else if (this.centerY < -0.5) {
             this.deltaY = -this.deltaY;
         } // else if
+        
+        if (this.centerX > 0.5) {
+            this.deltaX = -this.deltaX;
+        }
+        else if (this.centerX < -0.5) {
+            this.deltaX = -this.deltaX;
+        }
+        
+        this.centerX += this.deltaX;
         this.centerY += this.deltaY;
-
         this.repaint();
     } // actionPerformed( ActionEvent )
 
